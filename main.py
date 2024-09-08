@@ -77,11 +77,9 @@ class Timeline:
         return Timeline(tuple((j for j in self.jobs if j.get_id() != job.get_id())))
 
     def print(self):
-        delays = self.get_delays()
         last_location = self.jobs[0].get_location()
-        for job in self.jobs:
-            delay = delays[job]
-            # job.print()
+        jobs, delays = self.get_jobs_delays()
+        for job,delay  in zip(jobs, delays):
             print("Job:", str(job.get_id()).rjust(6),
                 "| Travel start:", str(delay + (job.get_start() - job.get_travel_time(last_location))).rjust(16),
                 "| Job start:", str(delay + job.get_start()).rjust(16),
@@ -96,28 +94,22 @@ class Timeline:
 
     def get_delays(self):
         time = timedelta(0)
-        delays:dict[Job,timedelta] = {}
+        delays:tuple[timedelta,...] = ()
         last_location = self.jobs[0].get_location()
         for j in self.jobs:
             time += j.get_travel_time(last_location)
             last_location = j.get_location()
-            delays[j] = max(timedelta(0),time - j.get_start())
+            delays += (max(timedelta(0),time - j.get_start()),)
             time += j.get_end() - j.get_start() # job duration
             time = max(time, j.get_end()) # wait until the end of the job
         return delays
 
     def get_jobs_delays(self):
-        delays_map = self.get_delays()
-        jobs:list[Job] = []
-        delays:list[timedelta] = []
-        for job, delay in delays_map.items():
-            jobs.append(job)
-            delays.append(delay)
-        return jobs, delays
+        return self.jobs, self.get_delays()
 
     def get_delay_sum(self):
         total =timedelta(0)
-        for delay in self.get_delays().values():
+        for delay in self.get_delays():
             total+= delay
         return total
 
@@ -130,11 +122,11 @@ class Timeline:
     def get_next_states(self, job:Job):
         timeline = self.copy_without_job(job)
 
-        res:list[Timeline] = []
+        res:tuple[Timeline,...] = ()
         for i in range(timeline.size()): # insert in the middle
-            res.append(timeline.copy_with_inserted_job(job,i))
+            res+=(timeline.copy_with_inserted_job(job,i),)
 
-        res.append(timeline.copy_with_appended_job(job)) # append at the end
+        res+=(timeline.copy_with_appended_job(job),) # append at the end
 
         return res
 
@@ -153,30 +145,33 @@ class State:
     def get_timelines(self):
         return self.timelines
 
-    def get_delays(self)->dict[Job,timedelta]:
-        res:dict[Job,timedelta] = {}
+    def get_jobs_delays(self):
+
+        jobs:tuple[Job,...] = ()
+        delays:tuple[timedelta,...] = ()
+
         for timeline in self.get_timelines():
-            res.update(timeline.get_delays())
-        return res
+            timeline_jobs, timeline_delays = timeline.get_jobs_delays()
+            jobs+=timeline_jobs
+            delays+=timeline_delays
+
+        return jobs,delays
 
     def get_operator(self,timeline:Timeline):
         for i,tl in enumerate(self.get_timelines()):
             if tl==timeline:
                 return i
 
-    def get_jobs_delays(self):
-        res_jobs:list[Job] =[        ]
-        res_delays:list[timedelta] = []
+    def get_delay_sum(self):
+        total =timedelta(0)
         for timeline in self.get_timelines():
-            jobs, delays = timeline.get_jobs_delays()
-            res_jobs+=jobs
-            res_delays+=delays
-        return res_jobs, res_delays
+            total+= timeline.get_delay_sum()
+        return total
 
     def evaluate(self)-> float:
         score =0
         for timeline in self.get_timelines():
-            score+= sum( (  (delay.total_seconds()/60)**2 for delay in timeline.get_delays().values()   )   )
+            score+= sum( (  (delay.total_seconds()/60)**2 for delay in timeline.get_delays()   )   )
         return score
 
     def copy_without_job(self, job:Job):
@@ -198,9 +193,9 @@ class State:
 
         changes = target_tl.get_next_states(target_jb)
 
-        states :list[State] = []
+        states :tuple[State,...] = ()
         for change in changes:
-            states.append(new_state.copy_with_edited_timeline(change, target_op))
+            states+=(new_state.copy_with_edited_timeline(change, target_op),)
 
         return states
 
@@ -208,10 +203,10 @@ class State:
         return self.evaluate() < other.evaluate()
 
     def print(self):
-        print(f"State with score: {self.evaluate()}")
         for op,tl in enumerate(self.get_timelines()):
             print(f"Operator: {str(op).ljust(2)}| Total Delay: {tl.get_delay_sum()}")
             tl.print()
+        print(f"State with score: {self.evaluate()} | Total Delay: {self.get_delay_sum()}")
 
 class Explorer:
 
@@ -264,11 +259,14 @@ jobs = [Job(1,timedelta(minutes=2),timedelta(minutes=17),Location(0,0)),
         Job(2,timedelta(minutes=7),timedelta(minutes=32),Location(960,234)),
         Job(3,timedelta(minutes=32),timedelta(minutes=37),Location(213,436)),
         Job(4,timedelta(minutes=17),timedelta(minutes=22),Location(544,745)),
-        Job(5,timedelta(minutes=32),timedelta(minutes=37),Location(532,234)),
+        Job(5,timedelta(minutes=32),timedelta(minutes=37),Location(2423,234)),
         Job(6,timedelta(minutes=57),timedelta(minutes=72),Location(757,867)),
         Job(7,timedelta(minutes=32),timedelta(minutes=57),Location(234,234)),
         Job(8,timedelta(minutes=47),timedelta(minutes=62),Location(234,345)),
         Job(9,timedelta(minutes=42),timedelta(minutes=87),Location(242,1254)),
+        Job(10,timedelta(minutes=67),timedelta(minutes=82),Location(234,234)),
+        Job(11,timedelta(minutes=72),timedelta(minutes=77),Location(364,2342)),
+        Job(12,timedelta(minutes=87),timedelta(minutes=92),Location(8568,1234)),
 ]
 operators = 3
 
