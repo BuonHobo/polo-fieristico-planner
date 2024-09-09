@@ -305,7 +305,6 @@ class Explorer:
         visited: set[State] = set()
         while self.fringe.qsize() > 0:
             score, state = self.fringe.get()
-            visited.add(state)
 
             if score < self.best_score:
                 difference = self.best_score[0] - score[0]
@@ -327,6 +326,7 @@ class Explorer:
             for next_state in state.get_next_states():
                 if next_state in visited:
                     continue
+                visited.add(next_state)
                 score = next_state.evaluate()
                 self.fringe.put((score, next_state))
 
@@ -343,21 +343,18 @@ l4 = Location(200, 2000)
 
 jobs = [
     Job(1, timedelta(minutes=10), timedelta(minutes=30), l1),
-    Job(2, timedelta(minutes=0), timedelta(minutes=60), l2),
-    Job(3, timedelta(minutes=0), timedelta(minutes=110), l3),
-    Job(4, timedelta(minutes=0), timedelta(minutes=90), l4),
-    Job(5, timedelta(minutes=5), timedelta(minutes=45), l2),
-    Job(6, timedelta(minutes=0), timedelta(minutes=50), l3),
-    Job(7, timedelta(minutes=0), timedelta(minutes=37), l4),
-    Job(10, timedelta(minutes=60), timedelta(minutes=90), l1),
-    Job(20, timedelta(minutes=60), timedelta(minutes=75), l2),
-    Job(30, timedelta(minutes=60), timedelta(minutes=160), l3),
-    Job(40, timedelta(minutes=60), timedelta(minutes=160), l1),
-    Job(50, timedelta(minutes=60), timedelta(minutes=160), l2),
-    Job(60, timedelta(minutes=60), timedelta(minutes=160), l3),
-    Job(70, timedelta(minutes=60), timedelta(minutes=160), l1),
+    Job(2, timedelta(minutes=0), timedelta(minutes=110), l3),
+    Job(3, timedelta(minutes=5), timedelta(minutes=45), l2),
+    Job(4, timedelta(minutes=5), timedelta(minutes=54), l4),
+    Job(5, timedelta(minutes=5), timedelta(minutes=77), l2),
+    Job(6, timedelta(minutes=5), timedelta(minutes=54), l1),
+    Job(7, timedelta(minutes=60), timedelta(minutes=90), l3),
+    Job(8, timedelta(minutes=70), timedelta(minutes=90), l2),
+    Job(9, timedelta(minutes=99), timedelta(minutes=122), l4),
+    Job(10, timedelta(minutes=60), timedelta(minutes=75), l1),
+    Job(11, timedelta(minutes=110), timedelta(minutes=130), l3),
 ]
 
-operators = 7
+operators = 5
 
 Explorer(jobs, operators).explore()
