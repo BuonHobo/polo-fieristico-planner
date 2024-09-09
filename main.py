@@ -97,25 +97,25 @@ class Timeline:
         for job, delay in zip(jobs, delays):
             print(
                 "Job:",
-                str(job.get_id()).rjust(6),
+                str(job.get_id()).ljust(6),
                 "| Travel start:",
                 str(
                     delay + (job.get_start() - job.get_travel_time(last_location))
-                ).rjust(16),
+                ).ljust(16),
                 "| Job start:",
-                str(delay + job.get_start()).rjust(16),
+                str(delay + job.get_start()).ljust(16),
                 "| Job end:",
-                str(delay + job.get_end()).rjust(16),
+                str(delay + job.get_end()).ljust(16),
                 "| Delay:",
-                str(delay).rjust(16),
+                str(delay).ljust(16),
                 "| Travel time:",
-                str(job.get_travel_time(last_location)).rjust(16),
+                str(job.get_travel_time(last_location)).ljust(16),
                 "| Duration:",
-                str(job.get_end() - job.get_start()).rjust(16),
+                str(job.get_end() - job.get_start()).ljust(16),
                 "| Target start:",
-                str(job.get_start()).rjust(16),
+                str(job.get_start()).ljust(16),
                 "| Target end:",
-                str(job.get_end()).rjust(16),
+                str(job.get_end()).ljust(16),
             )
             last_location = job.get_location()
 
@@ -235,7 +235,10 @@ class State:
     def get_next_states(self):
         jobs, delays = self.get_jobs_delays()
         # Choose a job to move with a probability based on the delay
-        target_jb = choices(jobs, [delay.total_seconds() for delay in delays])[0]
+        if sum(delay.total_seconds() for delay in delays) == 0:
+            target_jb = choices(jobs)[0]
+        else:
+            target_jb = choices(jobs, [delay.total_seconds() for delay in delays])[0]
 
         # Remove the job from the state
         new_state = self.copy_without_job(target_jb)
@@ -298,17 +301,27 @@ class Explorer:
 
     def explore(self):
         counter = 0
+        bad_iters = 0
         visited: set[State] = set()
         while self.fringe.qsize() > 0:
             score, state = self.fringe.get()
             visited.add(state)
 
             if score < self.best_score:
+                difference = self.best_score[0] - score[0]
                 self.best_state = state
                 self.best_score = score
-                print("Iter.:", str(counter).rjust(4), "| Best Score:", self.best_score)
+                bad_iters = 0
+                print(
+                    "Iter.:",
+                    str(counter).ljust(4),
+                    "| Best Score:",
+                    str(self.best_score).ljust(42),
+                    "| Difference:",
+                    difference,
+                )
 
-            if score <= self.threshold or counter > 100000:
+            if bad_iters > 10000:
                 break
 
             for next_state in state.get_next_states():
@@ -318,6 +331,7 @@ class Explorer:
                 self.fringe.put((score, next_state))
 
             counter += 1
+            bad_iters += 1
 
         self.best_state.print()
 
