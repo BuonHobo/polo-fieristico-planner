@@ -342,17 +342,17 @@ l3 = Location(1500, 600)
 l4 = Location(200, 2000)
 
 jobs = [
-    Job(1, timedelta(minutes=10), timedelta(minutes=30), l1),
-    Job(2, timedelta(minutes=0), timedelta(minutes=110), l3),
-    Job(3, timedelta(minutes=5), timedelta(minutes=45), l2),
-    Job(4, timedelta(minutes=5), timedelta(minutes=54), l4),
-    Job(5, timedelta(minutes=5), timedelta(minutes=77), l2),
-    Job(6, timedelta(minutes=5), timedelta(minutes=54), l1),
-    Job(7, timedelta(minutes=60), timedelta(minutes=90), l3),
-    Job(8, timedelta(minutes=70), timedelta(minutes=90), l2),
-    Job(9, timedelta(minutes=99), timedelta(minutes=122), l4),
-    Job(10, timedelta(minutes=60), timedelta(minutes=75), l1),
-    Job(11, timedelta(minutes=110), timedelta(minutes=130), l3),
+    Job(0, timedelta(minutes=10), timedelta(minutes=30), l1),
+    Job(1, timedelta(minutes=0), timedelta(minutes=110), l3),
+    Job(2, timedelta(minutes=5), timedelta(minutes=45), l2),
+    Job(3, timedelta(minutes=5), timedelta(minutes=54), l4),
+    Job(4, timedelta(minutes=5), timedelta(minutes=77), l2),
+    Job(5, timedelta(minutes=5), timedelta(minutes=54), l1),
+    Job(6, timedelta(minutes=60), timedelta(minutes=90), l3),
+    Job(7, timedelta(minutes=70), timedelta(minutes=90), l2),
+    Job(8, timedelta(minutes=99), timedelta(minutes=122), l4),
+    Job(9, timedelta(minutes=60), timedelta(minutes=75), l1),
+    Job(10, timedelta(minutes=110), timedelta(minutes=130), l3),
 ]
 
 operators = 5
