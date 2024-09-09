@@ -15,20 +15,6 @@ class Location:
         return ((self.x - other.x) ** 2 + (self.y - other.y) ** 2) ** 0.5
 
 
-def find_next_prime(n: int):
-    return find_prime_in_range(n, 2 * n)
-
-
-def find_prime_in_range(a: int, b: int):
-    for c in range(a, b):
-        for i in range(2, c):
-            if c % i == 0:
-                break
-        else:
-            return c
-    return -1
-
-
 class Job:
     ident: int = 2
 
@@ -44,7 +30,7 @@ class Job:
         self.location = location
         self.start = expected_start
         self.end = expected_end
-        Job.ident = find_next_prime(Job.ident)
+        Job.ident += 1
 
     def travel_time_from(self, location: Optional[Location]) -> timedelta:
         if location is None:
@@ -181,14 +167,14 @@ class State:
                 job = JOBS[timeline[j]]
                 delay = delays[j]
                 travel = travels[j]
-                print(f"Job {timeline[j]}:")
+                print(f"Job {job.id}:")
                 print(f"Travel start: {(job.start - travel) + delay}")
                 print(f"Start: {job.start + delay}")
                 print(f"End: {job.end + delay}")
                 print(f"Delay: {delay}")
                 print(f"Travel time: {travel}")
-                print(f"Expected start: {job.start}")
-                print(f"Expected end: {job.end}")
+                print(f"Expected start: {job.expected_start}")
+                print(f"Expected end: {job.expected_end}")
                 print(f"Duration: {job.end-job.start}")
                 print(f"Location: ({job.location.x}, {job.location.y})")
                 print()
