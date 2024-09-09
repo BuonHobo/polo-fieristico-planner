@@ -74,6 +74,8 @@ class Timeline:
         return False
 
     def get_total_transit_time(self):
+        if self.size() == 0:
+            return timedelta(0)
         time = timedelta(0)
         last_location = self.jobs[0].get_location()
         for j in self.jobs:
@@ -88,6 +90,8 @@ class Timeline:
         return Timeline(tuple((j for j in self.jobs if j.get_id() != job.get_id())))
 
     def print(self):
+        if self.size() == 0:
+            return
         last_location = self.jobs[0].get_location()
         jobs, delays = self.get_jobs_delays()
         for job, delay in zip(jobs, delays):
@@ -116,6 +120,8 @@ class Timeline:
             last_location = job.get_location()
 
     def get_delays(self):
+        if self.size() == 0:
+            return ()
         time = timedelta(0)
         delays: tuple[timedelta, ...] = ()
         last_location = self.jobs[0].get_location()
@@ -195,7 +201,7 @@ class State:
         time = timedelta(0)
         for timeline in self.get_timelines():
             time += timeline.get_total_transit_time()
-        return time.total_seconds()
+        return time
 
     def get_sum_of_squared_delays(self):
         score = 0
@@ -206,7 +212,10 @@ class State:
         return score
 
     def evaluate(self) -> tuple[float, float]:
-        return (self.get_sum_of_squared_delays(), self.get_total_transit_time())
+        return (
+            self.get_sum_of_squared_delays(),
+            self.get_total_transit_time().total_seconds() / 60,
+        )
 
     def copy_without_job(self, job: Job):
         return State(
@@ -230,7 +239,12 @@ class State:
         new_state = self.copy_without_job(target_jb)
 
         probabilities = [
-            1.0 / (tl.get_delay_sum().total_seconds() + 1)
+            1.0
+            / (
+                tl.get_delay_sum().total_seconds()
+                + tl.get_total_transit_time().total_seconds()
+                + 1
+            )
             for tl in new_state.get_timelines()
         ]
         target_tl = choices(new_state.get_timelines(), probabilities)[0]
@@ -288,7 +302,7 @@ class Explorer:
                 self.best_score = score
                 print("Iter.:", str(counter).rjust(4), "| Best Score:", self.best_score)
 
-            if score <= self.threshold or counter > 10000:
+            if score <= self.threshold or counter > 20000:
                 break
 
             for next_state in state.get_next_states():
