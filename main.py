@@ -336,20 +336,31 @@ class Explorer:
         self.best_state.print()
 
 
+l1 = Location(0, 0)
+l2 = Location(1000, 1000)
+l3 = Location(1500, 600)
+
 jobs = [
-    Job(1, timedelta(minutes=2), timedelta(minutes=17), Location(0, 0)),
-    Job(2, timedelta(minutes=7), timedelta(minutes=32), Location(960, 234)),
-    Job(3, timedelta(minutes=32), timedelta(minutes=37), Location(213, 436)),
-    Job(4, timedelta(minutes=17), timedelta(minutes=22), Location(544, 745)),
-    Job(5, timedelta(minutes=32), timedelta(minutes=37), Location(2423, 234)),
-    Job(6, timedelta(minutes=57), timedelta(minutes=72), Location(757, 867)),
-    Job(7, timedelta(minutes=32), timedelta(minutes=57), Location(234, 234)),
-    Job(8, timedelta(minutes=47), timedelta(minutes=62), Location(234, 345)),
-    Job(9, timedelta(minutes=42), timedelta(minutes=87), Location(242, 1254)),
-    Job(10, timedelta(minutes=67), timedelta(minutes=82), Location(234, 234)),
-    Job(11, timedelta(minutes=72), timedelta(minutes=77), Location(364, 2342)),
-    Job(12, timedelta(minutes=87), timedelta(minutes=92), Location(8568, 1234)),
+    Job(1, timedelta(minutes=0), timedelta(minutes=60), l1),
+    Job(2, timedelta(minutes=0), timedelta(minutes=60), l2),
+    Job(3, timedelta(minutes=0), timedelta(minutes=60), l3),
+    Job(4, timedelta(minutes=0), timedelta(minutes=90), l1),
+    Job(5, timedelta(minutes=0), timedelta(minutes=60), l2),
+    Job(6, timedelta(minutes=0), timedelta(minutes=60), l3),
+    Job(7, timedelta(minutes=0), timedelta(minutes=90), l1),
+    Job(8, timedelta(minutes=0), timedelta(minutes=60), l2),
+    Job(9, timedelta(minutes=0), timedelta(minutes=60), l3),
+    Job(10, timedelta(minutes=60), timedelta(minutes=160), l1),
+    Job(20, timedelta(minutes=60), timedelta(minutes=160), l2),
+    Job(30, timedelta(minutes=60), timedelta(minutes=160), l3),
+    Job(40, timedelta(minutes=60), timedelta(minutes=160), l1),
+    Job(50, timedelta(minutes=60), timedelta(minutes=160), l2),
+    Job(60, timedelta(minutes=60), timedelta(minutes=160), l3),
+    Job(70, timedelta(minutes=60), timedelta(minutes=160), l1),
+    Job(80, timedelta(minutes=60), timedelta(minutes=160), l2),
+    Job(90, timedelta(minutes=60), timedelta(minutes=160), l3),
 ]
-operators = 3
+
+operators = 9
 
 Explorer(jobs, operators).explore()
