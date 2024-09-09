@@ -339,28 +339,25 @@ class Explorer:
 l1 = Location(0, 0)
 l2 = Location(1000, 1000)
 l3 = Location(1500, 600)
+l4 = Location(200, 2000)
 
 jobs = [
-    Job(1, timedelta(minutes=0), timedelta(minutes=60), l1),
+    Job(1, timedelta(minutes=10), timedelta(minutes=30), l1),
     Job(2, timedelta(minutes=0), timedelta(minutes=60), l2),
-    Job(3, timedelta(minutes=0), timedelta(minutes=60), l3),
-    Job(4, timedelta(minutes=0), timedelta(minutes=90), l1),
-    Job(5, timedelta(minutes=0), timedelta(minutes=60), l2),
-    Job(6, timedelta(minutes=0), timedelta(minutes=60), l3),
-    Job(7, timedelta(minutes=0), timedelta(minutes=90), l1),
-    Job(8, timedelta(minutes=0), timedelta(minutes=60), l2),
-    Job(9, timedelta(minutes=0), timedelta(minutes=60), l3),
-    Job(10, timedelta(minutes=60), timedelta(minutes=160), l1),
-    Job(20, timedelta(minutes=60), timedelta(minutes=160), l2),
+    Job(3, timedelta(minutes=0), timedelta(minutes=110), l3),
+    Job(4, timedelta(minutes=0), timedelta(minutes=90), l4),
+    Job(5, timedelta(minutes=5), timedelta(minutes=45), l2),
+    Job(6, timedelta(minutes=0), timedelta(minutes=50), l3),
+    Job(7, timedelta(minutes=0), timedelta(minutes=37), l4),
+    Job(10, timedelta(minutes=60), timedelta(minutes=90), l1),
+    Job(20, timedelta(minutes=60), timedelta(minutes=75), l2),
     Job(30, timedelta(minutes=60), timedelta(minutes=160), l3),
     Job(40, timedelta(minutes=60), timedelta(minutes=160), l1),
     Job(50, timedelta(minutes=60), timedelta(minutes=160), l2),
     Job(60, timedelta(minutes=60), timedelta(minutes=160), l3),
     Job(70, timedelta(minutes=60), timedelta(minutes=160), l1),
-    Job(80, timedelta(minutes=60), timedelta(minutes=160), l2),
-    Job(90, timedelta(minutes=60), timedelta(minutes=160), l3),
 ]
 
-operators = 9
+operators = 7
 
 Explorer(jobs, operators).explore()
