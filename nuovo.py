@@ -16,7 +16,7 @@ class Location:
 
 
 class Job:
-    ident: int = 2
+    ident: int = 0
 
     def __init__(
         self,
@@ -135,8 +135,11 @@ class State:
         )
         return State(tuple(new_allocation))
 
-    def get_copies_with_job(self, timeline: int, job: int):
+    def get_copies_with_job(self, timeline: int, job: int, current_time: timedelta):
+        delays = self.calculate_timeline_delays(timeline)
         for i in range(len(self.allocation[timeline])):
+            if JOBS[i].start + delays[i] < current_time:
+                continue
             t = self.allocation[timeline]
             changed_timeline = t[:i] + (job,) + t[i:]
             new_allocation = tuple(
@@ -153,8 +156,12 @@ class State:
         )
         yield State(new_allocation)
 
-    def get_copies_with_moved_job(self, old_tl: int, new_tl: int, job: int):
-        return self.copy_without_job(old_tl, job).get_copies_with_job(new_tl, job)
+    def get_copies_with_moved_job(
+        self, old_tl: int, new_tl: int, job: int, current_time: timedelta
+    ):
+        return self.copy_without_job(old_tl, job).get_copies_with_job(
+            new_tl, job, current_time
+        )
 
     def show(self):
         for i, timeline in enumerate(self.allocation):
@@ -167,23 +174,39 @@ class State:
                 job = JOBS[timeline[j]]
                 delay = delays[j]
                 travel = travels[j]
-                print(f"Job {job.id}:")
-                print(f"Travel start: {(job.start - travel) + delay}")
-                print(f"Start: {job.start + delay}")
-                print(f"End: {job.end + delay}")
-                print(f"Delay: {delay}")
-                print(f"Travel time: {travel}")
-                print(f"Expected start: {job.expected_start}")
-                print(f"Expected end: {job.expected_end}")
-                print(f"Duration: {job.end-job.start}")
-                print(f"Location: ({job.location.x}, {job.location.y})")
-                print()
+                print(
+                    f"Job: {job.id} | "
+                    + f"Travel start: {(job.start - travel) + delay} | "
+                    + f"Start: {job.start + delay} | "
+                    + f"End: {job.end + delay} | "
+                    + f"Delay: {delay} | "
+                    + f"Travel time: {travel} | "
+                    + f"Expected start: {job.expected_start} | "
+                    + f"Expected end: {job.expected_end} | "
+                    + f"Duration: {job.end-job.start} | "
+                    + f"Location: ({job.location.x}, {job.location.y})"
+                )
             print()
         print(
             f"Total delay: {self.calculate_total_delay()}, Total travel: {self.calculate_total_travel()}, Total delay squared: {self.calculate_sum_of_squared_delay_minutes()}"
         )
 
-    def get_next_states(self):
+    def filter_started_jobs(
+        self,
+        current_time: timedelta,
+        candidates: tuple[tuple[int, int], ...],
+        weights: tuple[float, ...],
+    ):
+        delays = self.calculate_all_delays_flattened()
+        res_candidates = ()
+        res_weights = ()
+        for (j, t), w, d in zip(candidates, weights, delays):
+            if JOBS[j].start + d >= current_time:
+                res_candidates += ((j, t),)
+                res_weights += (w,)
+        return res_candidates, res_weights
+
+    def get_next_states(self, current_time: timedelta):
         candidates = self.coupled_jobs_timelines()
         weights = tuple(
             (d + t).total_seconds()
@@ -191,6 +214,10 @@ class State:
                 self.calculate_all_delays_flattened(),
                 self.calculate_all_travels_flattened(),
             )
+        )
+
+        candidates, weights = self.filter_started_jobs(
+            current_time, candidates, weights
         )
         try:
             j, old_t = choices(
@@ -220,15 +247,13 @@ class State:
             weights,
         )[0]
 
-        return self.get_copies_with_moved_job(old_t, target_timeline, j)
+        return self.get_copies_with_moved_job(old_t, target_timeline, j, current_time)
 
 
 class Explorer:
     threshold = (5, 5)
 
     def __init__(self):
-        self.fringe: PriorityQueue[tuple[tuple[float, float], State]] = PriorityQueue()
-
         timelines: list[tuple[int, ...]] = [()] * OPERATORS
         for i in range(len(JOBS)):
             timelines[i % OPERATORS] += (i,)
@@ -236,19 +261,21 @@ class Explorer:
         self.best_state = State(tuple(timelines))
         self.best_score = self.best_state.evaluate()
 
-        self.fringe.put((self.best_score, self.best_state))
+    def explore(self, current_time: timedelta):
+        fringe: PriorityQueue[tuple[tuple[float, float], State]] = PriorityQueue()
 
-    def explore(self):
+        fringe.put((self.best_score, self.best_state))
+
         counter = 0
         bad_iterations = 0
         visited: set[State] = set()
-        visited.add(self.best_state)
+        # visited.add(self.best_state)
 
-        while self.fringe.qsize() > 0:
-            score, state = self.fringe.get()
+        while fringe.qsize() > 0:
+            score, state = fringe.get()
 
             if score < self.best_score:
-                visited.remove(state)
+                # visited.remove(state)
                 self.best_score = score
                 self.best_state = state
                 bad_iterations = 0
@@ -257,11 +284,12 @@ class Explorer:
             if bad_iterations > 10000:
                 break
 
-            for new_state in state.get_next_states():
+            for new_state in state.get_next_states(current_time):
+                print(new_state)
                 if new_state not in visited:
-                    visited.add(new_state)
+                    # visited.add(new_state)
                     new_score = new_state.evaluate()
-                    self.fringe.put((new_score, new_state))
+                    fringe.put((new_score, new_state))
 
             counter += 1
             bad_iterations += 1
@@ -278,19 +306,22 @@ l4 = Location(200, 2000)
 
 
 JOBS: tuple[Job, ...] = (
-    Job(timedelta(minutes=10), timedelta(minutes=30), l1),
-    Job(timedelta(minutes=0), timedelta(minutes=110), l3),
-    Job(timedelta(minutes=5), timedelta(minutes=45), l2),
-    Job(timedelta(minutes=5), timedelta(minutes=54), l4),
-    Job(timedelta(minutes=5), timedelta(minutes=77), l2),
-    Job(timedelta(minutes=5), timedelta(minutes=54), l1),
-    Job(timedelta(minutes=60), timedelta(minutes=90), l3),
-    Job(timedelta(minutes=70), timedelta(minutes=90), l2),
-    Job(timedelta(minutes=99), timedelta(minutes=122), l4),
-    Job(timedelta(minutes=60), timedelta(minutes=75), l1),
-    Job(timedelta(minutes=110), timedelta(minutes=130), l3),
+    Job(timedelta(minutes=0), timedelta(minutes=30), l1),
+    Job(timedelta(minutes=0), timedelta(minutes=30), l1),
+    Job(timedelta(minutes=0), timedelta(minutes=30), l1),
+    Job(timedelta(minutes=0), timedelta(minutes=55), l2),
+    Job(timedelta(minutes=0), timedelta(minutes=30), l2),
+    Job(timedelta(minutes=30), timedelta(minutes=60), l1),
+    Job(timedelta(minutes=30), timedelta(minutes=60), l1),
+    Job(timedelta(minutes=30), timedelta(minutes=60), l2),
+    Job(timedelta(minutes=30), timedelta(minutes=60), l2),
 )
 
-OPERATORS = 4
+OPERATORS = 5
 
-Explorer().explore()
+explorer = Explorer()
+Explorer().explore(timedelta(minutes=2))
+# jobs = list(JOBS)
+# jobs[3].end += timedelta(minutes=25)
+# JOBS = tuple(jobs)
+# explorer.explore(timedelta(minutes=25))
