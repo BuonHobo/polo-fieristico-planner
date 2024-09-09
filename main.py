@@ -308,7 +308,7 @@ class Explorer:
                 self.best_score = score
                 print("Iter.:", str(counter).rjust(4), "| Best Score:", self.best_score)
 
-            if score <= self.threshold or counter > 20000:
+            if score <= self.threshold or counter > 100000:
                 break
 
             for next_state in state.get_next_states():
