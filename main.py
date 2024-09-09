@@ -70,6 +70,14 @@ class Timeline:
             return self.jobs == o.jobs
         return False
 
+    def get_total_transit_time(self):
+        time = timedelta(0)
+        last_location = self.jobs[0].get_location()
+        for j in self.jobs:
+            time += j.get_travel_time(last_location)
+            last_location = j.get_location()
+        return time
+
     def size(self):
         return len(self.jobs)
 
@@ -168,11 +176,20 @@ class State:
             total+= timeline.get_delay_sum()
         return total
 
-    def evaluate(self)-> float:
+    def get_total_transit_time(self):
+        time = timedelta(0)
+        for timeline in self.get_timelines():
+            time += timeline.get_total_transit_time()
+        return time.total_seconds()
+
+    def get_sum_of_squared_delays(self):
         score =0
         for timeline in self.get_timelines():
             score+= sum( (  (delay.total_seconds()/60)**2 for delay in timeline.get_delays()   )   )
         return score
+
+    def evaluate(self)-> tuple[float,float]:
+        return (self.get_sum_of_squared_delays(),self.get_total_transit_time())
 
     def copy_without_job(self, job:Job):
         return State(tuple((timeline.copy_without_job(job) for timeline in self.get_timelines())))
@@ -210,7 +227,7 @@ class State:
 
 class Explorer:
 
-    threshold = 10
+    threshold = (5,5)
 
     def __init__(self, jobs:list[Job], operators:int) -> None:
 
@@ -221,7 +238,7 @@ class Explorer:
 
         timeline2operator = tuple(Timeline(tuple(js)) for js in timelines)
 
-        self.fringe:PriorityQueue[tuple[float,State]] = PriorityQueue()
+        self.fringe:PriorityQueue[tuple[tuple[float,float],State]] = PriorityQueue()
 
         first_state = State(timeline2operator)
         first_score = first_state.evaluate()
