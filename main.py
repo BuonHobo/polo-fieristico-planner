@@ -355,6 +355,6 @@ jobs = [
     Job(10, timedelta(minutes=110), timedelta(minutes=130), l3),
 ]
 
-operators = 5
+operators = 4
 
 Explorer(jobs, operators).explore()

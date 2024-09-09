@@ -305,6 +305,6 @@ JOBS: tuple[Job, ...] = (
     Job(timedelta(minutes=110), timedelta(minutes=130), l3),
 )
 
-OPERATORS = 5
+OPERATORS = 4
 
 Explorer().explore()
