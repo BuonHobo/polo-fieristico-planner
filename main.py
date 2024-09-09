@@ -234,8 +234,10 @@ class State:
 
     def get_next_states(self):
         jobs, delays = self.get_jobs_delays()
+        # Choose a job to move with a probability based on the delay
         target_jb = choices(jobs, [delay.total_seconds() for delay in delays])[0]
 
+        # Remove the job from the state
         new_state = self.copy_without_job(target_jb)
 
         probabilities = [
@@ -247,12 +249,16 @@ class State:
             )
             for tl in new_state.get_timelines()
         ]
+
+        # Choose a timeline to move the job to with a probability based on the total delay and total transit time
         target_tl = choices(new_state.get_timelines(), probabilities)[0]
 
         target_op: int = new_state.get_operator(target_tl)  # type:ignore
 
+        # Try to insert the job in all possible positions in the timeline
         changes = target_tl.get_next_states(target_jb)
 
+        # Create a new state for each possible change
         states: tuple[State, ...] = ()
         for change in changes:
             states += (new_state.copy_with_edited_timeline(change, target_op),)
